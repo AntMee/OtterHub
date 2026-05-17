@@ -31,6 +31,7 @@ import {
   WallpaperSourceId,
 } from "@shared/types";
 import { useWallpaperSources, useWallpaperList } from "./hooks";
+import { useWallpaperSessionStore } from "@/stores/wallpaper-session-store";
 import { WallpaperGridItem } from "./WallpaperGridItem";
 
 export function WallpaperTab() {
@@ -49,14 +50,16 @@ export function WallpaperTab() {
   const [uploadingIds, setUploadingIds] = useState<Set<string | number>>(
     new Set()
   );
-  const [uploadedIds, setUploadedIds] = useState<Set<string | number>>(
-    new Set()
-  );
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
-  const [minPage, setMinPage] = useState(1);
-  const [maxPage, setMaxPage] = useState(20);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const pageSize = 20;
+
+  const minPage = useWallpaperSessionStore((s) => s.minPage);
+  const maxPage = useWallpaperSessionStore((s) => s.maxPage);
+  const setMinPage = useWallpaperSessionStore((s) => s.setMinPage);
+  const setMaxPage = useWallpaperSessionStore((s) => s.setMaxPage);
+  const uploadedIds = useWallpaperSessionStore((s) => s.uploadedIds);
+  const addUploadedId = useWallpaperSessionStore((s) => s.addUploadedId);
 
   const {
     wallpapers,
@@ -65,10 +68,7 @@ export function WallpaperTab() {
     setCurrentPage,
     fetchWallpapers,
     clearList,
-  } = useWallpaperList(activeSource, configs[activeSourceId], {
-    minPage,
-    maxPage,
-  });
+  } = useWallpaperList(activeSource, configs[activeSourceId]);
 
   const handleApiKeySave = async (newKey: string) => {
     if (!activeSource) return;
@@ -125,7 +125,7 @@ export function WallpaperTab() {
         },
       };
       addFileLocal(fileItem, FileType.Image);
-      setUploadedIds((prev) => new Set(prev).add(wp.id));
+      addUploadedId(wp.id);
 
       toast.success("已保存到云端");
     } catch (error: any) {
@@ -312,12 +312,12 @@ export function WallpaperTab() {
           </div>
         ) : (
           <div className="space-y-6 pb-6">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {displayWallpapers.map((wp) => (
                 <WallpaperGridItem
                   key={`${wp.source}-${wp.id}`}
                   wallpaper={wp}
-                  isUploaded={uploadedIds.has(wp.id)}
+                  isUploaded={uploadedIds.includes(String(wp.id))}
                   isUploading={uploadingIds.has(wp.id)}
                   onUpload={handleUpload}
                   onPreview={setPreviewUrl}
@@ -333,9 +333,7 @@ export function WallpaperTab() {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 rounded-full hover:bg-background/80 transition-all disabled:opacity-20"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(1, prev - 1))
-                    }
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -353,7 +351,7 @@ export function WallpaperTab() {
                     size="icon"
                     className="h-8 w-8 rounded-full hover:bg-background/80 transition-all disabled:opacity-20"
                     onClick={() =>
-                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                      setCurrentPage(Math.min(totalPages, currentPage + 1))
                     }
                     disabled={currentPage === totalPages}
                   >

@@ -154,7 +154,7 @@ export function Header() {
   // 桌面端头部导航栏
   return (
     <header className="sticky top-0 z-40 w-full border-b border-glass-border bg-glass-bg/70 backdrop-blur-xl">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
+      <div className="flex h-20 items-center justify-between px-6 md:px-8">
         {/* Left: Logo */}
         <div
           className="flex items-center gap-4 group cursor-pointer shrink-0"

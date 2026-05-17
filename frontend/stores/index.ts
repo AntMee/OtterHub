@@ -7,4 +7,5 @@ export enum storeKey {
   FileUI = "oh_file_ui",
   FileQuery = "oh_file_query",
   PreviewLayout = "oh_preview_layout",
+  WallpaperSession = "oh_wallpaper_session",
 }

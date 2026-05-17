@@ -6,6 +6,7 @@ import { WallpaperProvider } from "./types";
 import { getSourceById } from "./sources";
 import { UnifiedWallpaper } from "@shared/types";
 import { useWallpaperStore } from "@/stores/wallpaper-store";
+import { useWallpaperSessionStore } from "@/stores/wallpaper-session-store";
 
 /**
  * 数据源与配置管理 Hook
@@ -17,7 +18,7 @@ export function useWallpaperSources() {
     configs,
     updateConfig,
     fetchConfigsFromCloud,
-    syncConfigToCloud
+    syncConfigToCloud,
   } = useWallpaperStore();
 
   const activeSource = getSourceById(activeSourceId);
@@ -30,9 +31,9 @@ export function useWallpaperSources() {
 
   // 初始化时：如果本地没有数据，尝试从云端同步
   useEffect(() => {
-     if (Object.keys(configs).length === 0) {
-         fetchConfigsFromCloud();
-     }
+    if (Object.keys(configs).length === 0) {
+      fetchConfigsFromCloud();
+    }
   }, [configs, fetchConfigsFromCloud]);
 
   return {
@@ -49,15 +50,18 @@ export function useWallpaperSources() {
 
 /**
  * 壁纸列表与请求管理 Hook
+ * 壁纸数据存储在 sessionStorage 中，切换 tab 不会丢失。
  */
-export function useWallpaperList(
-  activeSource: WallpaperProvider,
-  config: any,
-  pagination: { minPage: number; maxPage: number },
-) {
-  const [wallpapers, setWallpapers] = useState<UnifiedWallpaper[]>([]);
+export function useWallpaperList(activeSource: WallpaperProvider, config: any) {
+  const wallpapers = useWallpaperSessionStore((s) => s.wallpapers);
+  const currentPage = useWallpaperSessionStore((s) => s.currentPage);
+  const minPage = useWallpaperSessionStore((s) => s.minPage);
+  const maxPage = useWallpaperSessionStore((s) => s.maxPage);
+  const setWallpapers = useWallpaperSessionStore((s) => s.setWallpapers);
+  const setCurrentPage = useWallpaperSessionStore((s) => s.setCurrentPage);
+  const clearList = useWallpaperSessionStore((s) => s.clearList);
+
   const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchWallpapers = async () => {
     if (!activeSource || !config) return;
@@ -69,7 +73,6 @@ export function useWallpaperList(
 
     setLoading(true);
     try {
-      const { minPage, maxPage } = pagination;
       const randomPage =
         Math.floor(Math.random() * (maxPage - minPage + 1)) + minPage;
 
@@ -83,16 +86,16 @@ export function useWallpaperList(
       } else {
         setWallpapers((prev) => {
           const existingKeys = new Set(
-            prev.map((wp) => `${wp.source}-${wp.id}`),
+            prev.map((wp) => `${wp.source}-${wp.id}`)
           );
           const newUnique = data.filter(
-            (wp: UnifiedWallpaper) => !existingKeys.has(`${wp.source}-${wp.id}`),
+            (wp: UnifiedWallpaper) => !existingKeys.has(`${wp.source}-${wp.id}`)
           );
           return [...newUnique, ...prev];
         });
         setCurrentPage(1);
         toast.success(
-          `${activeSource.name}: 新增 ${data.length} 张壁纸 (第 ${randomPage} 页)`,
+          `${activeSource.name}: 新增 ${data.length} 张壁纸 (第 ${randomPage} 页)`
         );
       }
     } catch (error: any) {
@@ -104,11 +107,6 @@ export function useWallpaperList(
       setLoading(false);
     }
   };
-
-  const clearList = useCallback(() => {
-    setWallpapers([]);
-    setCurrentPage(1);
-  }, []);
 
   return {
     wallpapers,
