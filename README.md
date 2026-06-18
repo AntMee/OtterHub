@@ -41,15 +41,6 @@ OtterHub 是一个 **为个人使用场景定制** 的私人云盘方案：
 
 它不追求"什么都支持"，而是专注于**刚好够用、稳定、好维护**。
 
-> [!IMPORTANT]
-> 体验站点：[OtterHub Demo](https://otterhub-demo.pages.dev/)
->
-> 账号：`OtterHub` | 密码：`123456`
->
-> 限制：演示站的默认文件不可删，仅支持上传 ≤20MB 文件（1 小时自动清理）
-
-![网站截图](public/website-screenshot.png)
-
 ## ✨ 核心能力
 
 - **私人文件存储**：
